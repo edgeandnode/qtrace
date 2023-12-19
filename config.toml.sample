@@ -10,7 +10,9 @@ url = "https://api.thegraph.com/"
 trace-token = "<trace token>"
 
 # This section is optional; the --trace and --data command line options
-# override anything set here
+# override the corresponding settings here
 [output]
 trace = "/tmp/trace.json"
 data = "/tmp/data.json"
+query = "/tmp/query.graphql"
+variables = "/tmp/variables.json"

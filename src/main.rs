@@ -245,6 +245,8 @@ impl GraphNode {
 struct Output {
     trace: Option<String>,
     data: Option<String>,
+    query: Option<String>,
+    variables: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -261,6 +263,20 @@ impl Config {
         let config: Config = toml::from_str(&config)?;
         Ok(config)
     }
+}
+
+fn save_query(config: &Config, log_entry: &LogEntry) -> anyhow::Result<()> {
+    if let Some(output) = &config.output {
+        if let Some(query) = &output.query {
+            let mut f = File::create(query)?;
+            writeln!(f, "{}", log_entry.query)?;
+        }
+        if let Some(vars) = &output.variables {
+            let mut f = File::create(vars)?;
+            writeln!(f, "{}", json::to_string_pretty(&log_entry.variables)?)?;
+        }
+    }
+    Ok(())
 }
 
 fn save_output(opt: &Opts, config: &Config, json_output: &json::Value) -> anyhow::Result<()> {
@@ -362,6 +378,7 @@ fn main() -> anyhow::Result<()> {
     let log_entry = config
         .loki
         .query(&opt.deployment, opt.qid.as_deref(), opt.min_time)?;
+    save_query(&config, &log_entry)?;
 
     writeln!(out, "Querying graph-node for query trace")?;
     let output = &config.graph_node.query(&opt.deployment, &log_entry)?;
