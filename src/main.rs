@@ -67,6 +67,7 @@ impl Loki {
         deployment: &str,
         qid: Option<&str>,
         min_time: Option<usize>,
+        out: &mut dyn std::io::Write,
     ) -> anyhow::Result<LogEntry> {
         let query = {
             // This will need to be adjusted if the query log format changes
@@ -97,7 +98,11 @@ impl Loki {
             json::from_str(&resp).map_err(|e| anyhow!("Failed to parse Loki response: {}", e))?;
         let stream = match &resp["data"]["result"][0]["stream"] {
             json::Value::Object(o) => o,
-            _ => return Err(anyhow!("Invalid Loki response: could not find stream")),
+            _ => {
+                writeln!(out, "Loki query: {query}")?;
+                writeln!(out, "Loki response status: {}", resp["status"])?;
+                return Err(anyhow!("Invalid Loki response: no result"));
+            }
         };
         let query = match &stream["query"] {
             json::Value::String(s) => s.to_string(),
@@ -375,9 +380,10 @@ fn main() -> anyhow::Result<()> {
     };
 
     writeln!(out, "Querying Loki for query log entry")?;
-    let log_entry = config
-        .loki
-        .query(&opt.deployment, opt.qid.as_deref(), opt.min_time)?;
+    let log_entry =
+        config
+            .loki
+            .query(&opt.deployment, opt.qid.as_deref(), opt.min_time, &mut out)?;
     save_query(&config, &log_entry)?;
 
     writeln!(out, "Querying graph-node for query trace")?;
