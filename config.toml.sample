@@ -1,0 +1,16 @@
+[loki]
+cluster = "your Loki cluster name"
+url = "https://<loki host>"
+username = "loki"
+password = "<password>"
+
+[graph-node]
+url = "https://api.thegraph.com/"
+# Whatever GRAPH_GRAPHQL_TRACE_TOKEN is set to
+trace-token = "<trace token>"
+
+# This section is optional; the --trace and --data command line options
+# override anything set here
+[output]
+trace = "/tmp/trace.json"
+data = "/tmp/data.json"
